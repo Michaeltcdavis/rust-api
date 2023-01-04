@@ -1,5 +1,5 @@
 
-  use actix_web::{get, post, web, App, HttpServer};
+  use actix_web::{get, post, web, App, HttpResponse, HttpServer};
   use std::sync::Mutex;
 
   struct AppStateWithCounter {
@@ -12,6 +12,15 @@
       format!("Request Number: {counter}!")
   }
 
+  //this can be moved to a different module
+  fn config(cfg: &mut web::ServiceConfig) {
+    cfg.service(
+      web::resource("/test")
+        .route(web::get().to(|| async {HttpResponse::Ok().body("test")}))
+        .route(web::head().to(HttpResponse::MethodNotAllowed)),
+    );
+  }
+
   #[actix_web::main]
   async fn main() -> std::io::Result<()> {
     let counter = web::Data::new(AppStateWithCounter {
@@ -19,6 +28,7 @@
     });
       HttpServer::new(move || {
           App::new()
+            .configure(config)
             .app_data(counter.clone())
             .route("/", web::get().to(index))
       })
